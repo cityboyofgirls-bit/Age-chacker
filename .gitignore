@@ -1,18 +1,875 @@
-# This .gitignore is appropriate for repositories deployed to GitHub Pages and using
-# a Gemfile as specified at https://github.com/github/pages-gem#conventional
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Age Checker · Material Glass</title>
 
-# Basic Jekyll gitignores (synchronize to Jekyll.gitignore)
-_site/
-.sass-cache/
-.jekyll-cache/
-.jekyll-metadata
+<!-- Fonts: Poppins for display headings, Inter for body/UI, both give a Material-You feel -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-# Additional Ruby/bundler ignore for when you run: bundle install
-/vendor
+<style>
+  /* ============================================================
+     DESIGN TOKENS
+     Light mode: soft lavender-peach "Material You" wash
+     Dark mode: deep indigo/graphite with violet-cyan glow
+     ============================================================ */
+  :root{
+    --bg-1:#eef0fb;
+    --bg-2:#fbeef2;
+    --bg-3:#eafaf3;
+    --surface: rgba(255,255,255,0.55);
+    --surface-strong: rgba(255,255,255,0.75);
+    --border: rgba(255,255,255,0.6);
+    --text-main:#221c35;
+    --text-sub:#5c5675;
+    --accent-1:#7c5cff;
+    --accent-2:#ff6fa5;
+    --accent-3:#33d69f;
+    --shadow: 0 8px 32px rgba(80,60,140,0.18);
+    --input-bg: rgba(255,255,255,0.6);
+    --ring-track: rgba(124,92,255,0.15);
+    --danger:#e0446b;
+    --radius-lg:28px;
+    --radius-md:18px;
+    --radius-sm:12px;
+  }
 
-# Specific ignore for GitHub Pages
-# GitHub Pages will always use its own deployed version of pages-gem
-# This means GitHub Pages will NOT use your Gemfile.lock and therefore it is
-# counterproductive to check this file into the repository.
-# Details at https://github.com/github/pages-gem/issues/768
-Gemfile.lock
+  html[data-theme="dark"]{
+    --bg-1:#151024;
+    --bg-2:#1a1130;
+    --bg-3:#100c20;
+    --surface: rgba(30,24,54,0.55);
+    --surface-strong: rgba(34,27,60,0.75);
+    --border: rgba(255,255,255,0.09);
+    --text-main:#f1eefc;
+    --text-sub:#b2a9d1;
+    --accent-1:#9b7bff;
+    --accent-2:#ff7fb4;
+    --accent-3:#3fe8b0;
+    --shadow: 0 8px 40px rgba(0,0,0,0.45);
+    --input-bg: rgba(255,255,255,0.06);
+    --ring-track: rgba(155,123,255,0.18);
+    --danger:#ff6b8b;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Inter', sans-serif;
+    color:var(--text-main);
+    background:
+      radial-gradient(circle at 15% 20%, var(--bg-2) 0%, transparent 45%),
+      radial-gradient(circle at 85% 15%, var(--bg-3) 0%, transparent 45%),
+      radial-gradient(circle at 50% 90%, var(--bg-2) 0%, transparent 55%),
+      var(--bg-1);
+    background-attachment:fixed;
+    transition: background 0.5s ease, color 0.4s ease;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:32px 16px 24px;
+    overflow-x:hidden;
+  }
+
+  /* floating ambient blobs for depth, purely decorative */
+  .blob{
+    position:fixed;
+    border-radius:50%;
+    filter:blur(60px);
+    opacity:0.35;
+    z-index:0;
+    pointer-events:none;
+    animation: float 14s ease-in-out infinite;
+  }
+  .blob-a{ width:260px;height:260px; background:var(--accent-1); top:-60px; left:-60px; }
+  .blob-b{ width:220px;height:220px; background:var(--accent-2); bottom:-40px; right:-40px; animation-delay:3s; }
+  .blob-c{ width:180px;height:180px; background:var(--accent-3); top:40%; right:-60px; animation-delay:6s; }
+
+  @keyframes float{
+    0%,100%{ transform:translateY(0) translateX(0); }
+    50%{ transform:translateY(-30px) translateX(20px); }
+  }
+
+  /* ============================================================
+     TOP BAR
+     ============================================================ */
+  .topbar{
+    width:100%;
+    max-width:460px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    z-index:2;
+    margin-bottom:18px;
+  }
+
+  .brand{
+    font-family:'Poppins', sans-serif;
+    font-weight:700;
+    font-size:1.15rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    letter-spacing:-0.02em;
+  }
+  .brand-badge{
+    width:34px;height:34px;
+    border-radius:12px;
+    background:linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.05rem;
+    box-shadow:0 4px 14px rgba(124,92,255,0.4);
+  }
+
+  /* Theme toggle: Material-style pill switch */
+  .theme-toggle{
+    width:60px;
+    height:32px;
+    border-radius:20px;
+    background:var(--surface-strong);
+    border:1px solid var(--border);
+    backdrop-filter: blur(10px);
+    position:relative;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    padding:3px;
+    transition: background 0.3s ease;
+  }
+  .theme-toggle .knob{
+    width:24px;height:24px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    display:flex;align-items:center;justify-content:center;
+    font-size:0.75rem;
+    transition: transform 0.35s cubic-bezier(.68,-0.4,.27,1.4);
+    box-shadow:0 2px 8px rgba(0,0,0,0.25);
+  }
+  html[data-theme="dark"] .theme-toggle .knob{ transform: translateX(28px); }
+
+  /* ============================================================
+     CARD
+     ============================================================ */
+  .card{
+    width:100%;
+    max-width:460px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    box-shadow: var(--shadow);
+    padding:28px 26px 30px;
+    z-index:2;
+    animation: rise 0.7s cubic-bezier(.2,.8,.2,1) both;
+  }
+
+  @keyframes rise{
+    from{ opacity:0; transform:translateY(28px) scale(0.98); }
+    to{ opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  .card h1{
+    font-family:'Poppins', sans-serif;
+    font-size:1.4rem;
+    font-weight:700;
+    margin:0 0 4px;
+    letter-spacing:-0.02em;
+  }
+  .card .subtitle{
+    color:var(--text-sub);
+    font-size:0.9rem;
+    margin:0 0 22px;
+  }
+
+  /* ---------- Avatar upload ---------- */
+  .avatar-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    margin-bottom:22px;
+  }
+  .avatar-circle{
+    width:104px;height:104px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--accent-1), var(--accent-2), var(--accent-3));
+    padding:3px;
+    cursor:pointer;
+    position:relative;
+    transition: transform 0.25s ease;
+  }
+  .avatar-circle:hover{ transform: scale(1.05) rotate(-2deg); }
+  .avatar-circle:active{ transform: scale(0.97); }
+
+  .avatar-inner{
+    width:100%;height:100%;
+    border-radius:50%;
+    background:var(--surface-strong);
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    font-size:2rem;
+  }
+  .avatar-inner img{
+    width:100%;height:100%;object-fit:cover;
+  }
+  .avatar-hint{
+    font-size:0.78rem;
+    color:var(--text-sub);
+    margin-top:8px;
+  }
+  #avatarInput{ display:none; }
+
+  /* ---------- Fields ---------- */
+  .field{
+    margin-bottom:16px;
+    position:relative;
+  }
+  .field label{
+    display:block;
+    font-size:0.8rem;
+    font-weight:600;
+    color:var(--text-sub);
+    margin-bottom:6px;
+    letter-spacing:0.01em;
+  }
+  .field input[type="text"],
+  .field input[type="date"]{
+    width:100%;
+    padding:13px 14px;
+    border-radius:var(--radius-sm);
+    border:1.5px solid var(--border);
+    background:var(--input-bg);
+    color:var(--text-main);
+    font-size:0.95rem;
+    font-family:'Inter', sans-serif;
+    outline:none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.3s;
+    backdrop-filter: blur(6px);
+  }
+  .field input::placeholder{ color:var(--text-sub); opacity:0.7; }
+  .field input:focus{
+    border-color:var(--accent-1);
+    box-shadow: 0 0 0 4px rgba(124,92,255,0.15);
+  }
+  .field input.invalid{
+    border-color:var(--danger);
+    box-shadow: 0 0 0 4px rgba(224,68,107,0.12);
+    animation: shake 0.35s ease;
+  }
+  @keyframes shake{
+    0%,100%{ transform:translateX(0); }
+    25%{ transform:translateX(-6px); }
+    75%{ transform:translateX(6px); }
+  }
+  .error-msg{
+    color:var(--danger);
+    font-size:0.78rem;
+    margin-top:6px;
+    display:none;
+    align-items:center;
+    gap:5px;
+  }
+  .error-msg.show{ display:flex; }
+
+  /* Date input calendar icon color-scheme */
+  input[type="date"]{ color-scheme: light; }
+  html[data-theme="dark"] input[type="date"]{ color-scheme: dark; }
+
+  /* ---------- Button ---------- */
+  .btn-calc{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:var(--radius-sm);
+    background:linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    color:#fff;
+    font-family:'Poppins', sans-serif;
+    font-weight:600;
+    font-size:1rem;
+    cursor:pointer;
+    margin-top:6px;
+    position:relative;
+    overflow:hidden;
+    box-shadow: 0 8px 22px rgba(124,92,255,0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .btn-calc:hover{ transform: translateY(-2px); box-shadow: 0 12px 28px rgba(124,92,255,0.45); }
+  .btn-calc:active{ transform: translateY(0) scale(0.98); }
+
+  .btn-calc .ripple{
+    position:absolute;
+    border-radius:50%;
+    background:rgba(255,255,255,0.5);
+    transform:scale(0);
+    animation: ripple 0.6s ease-out forwards;
+    pointer-events:none;
+  }
+  @keyframes ripple{
+    to{ transform:scale(4); opacity:0; }
+  }
+
+  /* ============================================================
+     RESULTS
+     ============================================================ */
+  .results{
+    margin-top:26px;
+    display:none;
+  }
+  .results.show{
+    display:block;
+    animation: rise 0.6s cubic-bezier(.2,.8,.2,1) both;
+  }
+
+  .greeting{
+    font-family:'Poppins', sans-serif;
+    font-size:1.15rem;
+    font-weight:700;
+    text-align:center;
+    margin-bottom:18px;
+    background:linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+
+  /* Signature element: circular age ring, Android "Material You" style progress ring
+     showing progress through the current year of life */
+  .ring-wrap{
+    display:flex;
+    justify-content:center;
+    margin-bottom:20px;
+  }
+  .ring{
+    position:relative;
+    width:172px;
+    height:172px;
+  }
+  .ring svg{ transform: rotate(-90deg); }
+  .ring-track{ stroke:var(--ring-track); }
+  .ring-progress{
+    stroke: url(#ringGradient);
+    stroke-linecap:round;
+    transition: stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1);
+  }
+  .ring-center{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+  }
+  .ring-center .age-num{
+    font-family:'Poppins', sans-serif;
+    font-size:2.4rem;
+    font-weight:800;
+    line-height:1;
+  }
+  .ring-center .age-label{
+    font-size:0.72rem;
+    color:var(--text-sub);
+    margin-top:4px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+  }
+
+  .stat-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:16px;
+  }
+  .stat-card{
+    background:var(--surface-strong);
+    border:1px solid var(--border);
+    border-radius:var(--radius-md);
+    padding:14px 16px;
+    text-align:center;
+  }
+  .stat-card .icon{ font-size:1.3rem; margin-bottom:4px; }
+  .stat-card .value{
+    font-family:'Poppins', sans-serif;
+    font-weight:700;
+    font-size:1.15rem;
+  }
+  .stat-card .label{
+    font-size:0.72rem;
+    color:var(--text-sub);
+    margin-top:2px;
+  }
+
+  .birthday-banner{
+    display:none;
+    align-items:center;
+    gap:10px;
+    background:linear-gradient(135deg, rgba(124,92,255,0.15), rgba(255,111,165,0.15));
+    border:1px solid var(--border);
+    border-radius:var(--radius-md);
+    padding:14px 16px;
+    font-size:0.9rem;
+    font-weight:600;
+    margin-top:4px;
+  }
+  .birthday-banner.show{ display:flex; }
+
+  /* ============================================================
+     FOOTER
+     ============================================================ */
+  footer{
+    margin-top:28px;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:0.85rem;
+    color:var(--text-sub);
+  }
+  .yt-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 14px;
+    border-radius:20px;
+    border:1px solid var(--border);
+    background:var(--surface-strong);
+    color:var(--text-main);
+    font-weight:600;
+    text-decoration:none;
+    font-size:0.85rem;
+    cursor:pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+  .yt-btn:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(124,92,255,0.25);
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    color:#fff;
+  }
+
+  /* Confetti canvas overlay */
+  #confettiCanvas{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:50;
+  }
+
+  /* Responsive tweaks */
+  @media (min-width:600px){
+    body{ padding-top:48px; }
+    .card{ padding:36px 40px 40px; }
+  }
+  @media (max-width:360px){
+    .stat-grid{ grid-template-columns:1fr 1fr; gap:8px; }
+    .card{ padding:22px 18px 26px; }
+  }
+
+  /* Respect reduced motion preference */
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
+  }
+
+  /* Visible keyboard focus for accessibility */
+  a:focus-visible, button:focus-visible, input:focus-visible, .avatar-circle:focus-visible, .theme-toggle:focus-visible{
+    outline:2.5px solid var(--accent-1);
+    outline-offset:2px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ambient decorative blobs -->
+<div class="blob blob-a"></div>
+<div class="blob blob-b"></div>
+<div class="blob blob-c"></div>
+
+<canvas id="confettiCanvas"></canvas>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="brand-badge">🎂</span>
+    Age Checker
+  </div>
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">
+    <span class="knob" id="themeKnob">☀️</span>
+  </button>
+</div>
+
+<main class="card">
+  <h1>How old are you, really?</h1>
+  <p class="subtitle">Add a photo, your name and birthday — we'll do the math.</p>
+
+  <!-- Avatar upload -->
+  <div class="avatar-wrap">
+    <label class="avatar-circle" for="avatarInput" tabindex="0">
+      <span class="avatar-inner" id="avatarInner">📷</span>
+    </label>
+    <input type="file" id="avatarInput" accept="image/*" />
+    <span class="avatar-hint">Tap to add a profile picture</span>
+  </div>
+
+  <!-- Name field -->
+  <div class="field">
+    <label for="nameInput">Your name</label>
+    <input type="text" id="nameInput" placeholder="e.g. Victor" autocomplete="name" />
+    <div class="error-msg" id="nameError">⚠️ Please enter your name</div>
+  </div>
+
+  <!-- DOB field -->
+  <div class="field">
+    <label for="dobInput">Date of birth</label>
+    <input type="date" id="dobInput" />
+    <div class="error-msg" id="dobError">⚠️ Please pick a valid birth date (not in the future)</div>
+  </div>
+
+  <button class="btn-calc" id="calcBtn">Calculate my age</button>
+
+  <!-- Results -->
+  <section class="results" id="results" aria-live="polite">
+    <p class="greeting" id="greetingText"></p>
+
+    <div class="ring-wrap">
+      <div class="ring">
+        <svg width="172" height="172" viewBox="0 0 172 172">
+          <defs>
+            <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#7c5cff"/>
+              <stop offset="55%" stop-color="#ff6fa5"/>
+              <stop offset="100%" stop-color="#33d69f"/>
+            </linearGradient>
+          </defs>
+          <circle class="ring-track" cx="86" cy="86" r="76" stroke-width="14" fill="none"/>
+          <circle class="ring-progress" id="ringProgress" cx="86" cy="86" r="76" stroke-width="14" fill="none"
+                  stroke-dasharray="477.5" stroke-dashoffset="477.5"/>
+        </svg>
+        <div class="ring-center">
+          <span class="age-num" id="ageYears">0</span>
+          <span class="age-label">years old</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="icon">📅</div>
+        <div class="value" id="daysLived">0</div>
+        <div class="label">days lived</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">🎉</div>
+        <div class="value" id="daysUntil">0</div>
+        <div class="label">days to next birthday</div>
+      </div>
+    </div>
+
+    <div class="birthday-banner" id="birthdayBanner">
+      🎈 <span>It's your birthday today — happy birthday!</span>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Made by
+  <a class="yt-btn" href="https://www.youtube.com/@Victor" target="_blank" rel="noopener noreferrer">
+    ▶️ Victor
+  </a>
+</footer>
+
+<script>
+/* ============================================================
+   THEME: light/dark toggle persisted in localStorage
+   ============================================================ */
+const root = document.documentElement;
+const themeToggle = document.getElementById('themeToggle');
+const themeKnob = document.getElementById('themeKnob');
+
+function applyTheme(theme){
+  root.setAttribute('data-theme', theme);
+  themeKnob.textContent = theme === 'dark' ? '🌙' : '☀️';
+  localStorage.setItem('age-checker-theme', theme);
+}
+
+// On load: use saved preference, otherwise fall back to system preference
+const savedTheme = localStorage.getItem('age-checker-theme');
+if(savedTheme){
+  applyTheme(savedTheme);
+}else{
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+}
+
+themeToggle.addEventListener('click', () => {
+  const current = root.getAttribute('data-theme');
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+});
+
+/* ============================================================
+   AVATAR UPLOAD with live preview
+   ============================================================ */
+const avatarInput = document.getElementById('avatarInput');
+const avatarInner = document.getElementById('avatarInner');
+
+avatarInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('image/')){
+    alert('Please choose an image file.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    avatarInner.innerHTML = `<img src="${ev.target.result}" alt="Profile picture preview" />`;
+  };
+  reader.readAsDataURL(file);
+});
+
+/* ============================================================
+   VALIDATION + AGE CALCULATION
+   ============================================================ */
+const nameInput = document.getElementById('nameInput');
+const dobInput = document.getElementById('dobInput');
+const nameError = document.getElementById('nameError');
+const dobError = document.getElementById('dobError');
+const calcBtn = document.getElementById('calcBtn');
+const resultsSection = document.getElementById('results');
+
+// Cap the date picker at today, so users can't pick a future date
+const todayISO = new Date().toISOString().split('T')[0];
+dobInput.setAttribute('max', todayISO);
+
+function clearErrors(){
+  nameInput.classList.remove('invalid');
+  dobInput.classList.remove('invalid');
+  nameError.classList.remove('show');
+  dobError.classList.remove('show');
+}
+
+function showError(inputEl, errorEl){
+  inputEl.classList.add('invalid');
+  errorEl.classList.add('show');
+}
+
+function validate(){
+  clearErrors();
+  let valid = true;
+
+  const name = nameInput.value.trim();
+  if(name.length < 1){
+    showError(nameInput, nameError);
+    valid = false;
+  } else if(!/^[a-zA-Z\u00C0-\u024F\s'.-]+$/.test(name)){
+    // Letters, accented characters, spaces, apostrophes, hyphens, dots only
+    showError(nameInput, nameError);
+    nameError.textContent = "⚠️ Name should only contain letters";
+    valid = false;
+  }
+
+  const dobVal = dobInput.value;
+  if(!dobVal){
+    showError(dobInput, dobError);
+    dobError.textContent = "⚠️ Please pick your date of birth";
+    valid = false;
+  } else {
+    const dobDate = new Date(dobVal + 'T00:00:00');
+    const now = new Date();
+    if(dobDate > now){
+      showError(dobInput, dobError);
+      dobError.textContent = "⚠️ Birth date can't be in the future";
+      valid = false;
+    } else {
+      const earliest = new Date('1900-01-01');
+      if(dobDate < earliest){
+        showError(dobInput, dobError);
+        dobError.textContent = "⚠️ Please enter a realistic birth date";
+        valid = false;
+      }
+    }
+  }
+
+  return valid;
+}
+
+// Ripple effect on the button for tactile Material feedback
+calcBtn.addEventListener('click', function(e){
+  const rect = this.getBoundingClientRect();
+  const ripple = document.createElement('span');
+  ripple.className = 'ripple';
+  const size = Math.max(rect.width, rect.height);
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
+  ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
+  this.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 650);
+
+  handleCalculate();
+});
+
+function handleCalculate(){
+  if(!validate()) return;
+
+  const name = nameInput.value.trim();
+  const dob = new Date(dobInput.value + 'T00:00:00');
+  const now = new Date();
+
+  // --- Age in years, months, days (calendar-accurate) ---
+  let years = now.getFullYear() - dob.getFullYear();
+  let months = now.getMonth() - dob.getMonth();
+  let days = now.getDate() - dob.getDate();
+  if(days < 0){
+    months -= 1;
+    const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+  if(months < 0){
+    years -= 1;
+    months += 12;
+  }
+
+  // --- Days lived (total, floor to whole days) ---
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const daysLivedTotal = Math.floor((now - dob) / msPerDay);
+
+  // --- Days until next birthday ---
+  let nextBirthday = new Date(now.getFullYear(), dob.getMonth(), dob.getDate());
+  if(nextBirthday < now){
+    // strip time for accurate comparison
+  }
+  const todayStripped = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  nextBirthday = new Date(todayStripped.getFullYear(), dob.getMonth(), dob.getDate());
+  if(nextBirthday < todayStripped){
+    nextBirthday.setFullYear(nextBirthday.getFullYear() + 1);
+  }
+  const daysUntilBirthday = Math.round((nextBirthday - todayStripped) / msPerDay);
+  const isBirthdayToday = daysUntilBirthday === 0;
+
+  // --- Time-of-day aware greeting ---
+  const hour = now.getHours();
+  let timeGreeting = 'Hello';
+  if(hour < 12) timeGreeting = 'Good morning';
+  else if(hour < 18) timeGreeting = 'Good afternoon';
+  else timeGreeting = 'Good evening';
+
+  document.getElementById('greetingText').textContent =
+    isBirthdayToday
+      ? `🎉 ${timeGreeting}, ${name}! Happy Birthday!`
+      : `${timeGreeting}, ${name}!`;
+
+  document.getElementById('ageYears').textContent = years;
+  document.getElementById('daysLived').textContent = daysLivedTotal.toLocaleString();
+  document.getElementById('daysUntil').textContent = isBirthdayToday ? '🎂' : daysUntilBirthday.toLocaleString();
+
+  // --- Progress ring: how far through the current year-of-life the person is ---
+  // Based on days since last birthday out of days until the next one
+  let lastBirthday = new Date(todayStripped.getFullYear(), dob.getMonth(), dob.getDate());
+  if(lastBirthday > todayStripped) lastBirthday.setFullYear(lastBirthday.getFullYear() - 1);
+  const cycleLength = Math.round((nextBirthday - lastBirthday) / msPerDay) || 365;
+  const daysIntoCycle = Math.round((todayStripped - lastBirthday) / msPerDay);
+  const progressFraction = isBirthdayToday ? 1 : daysIntoCycle / cycleLength;
+
+  const circumference = 2 * Math.PI * 76; // r=76
+  const ringProgress = document.getElementById('ringProgress');
+  const offset = circumference * (1 - progressFraction);
+  // slight delay so the CSS transition animates on reveal
+  requestAnimationFrame(() => {
+    ringProgress.style.strokeDashoffset = offset;
+  });
+
+  // --- Birthday banner + confetti ---
+  const banner = document.getElementById('birthdayBanner');
+  if(isBirthdayToday){
+    banner.classList.add('show');
+    launchConfetti();
+  } else {
+    banner.classList.remove('show');
+  }
+
+  resultsSection.classList.add('show');
+  resultsSection.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+// Allow pressing Enter in either field to trigger calculation
+[nameInput, dobInput].forEach(el => {
+  el.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      calcBtn.click();
+    }
+  });
+});
+
+/* ============================================================
+   CONFETTI (lightweight canvas implementation, no dependencies)
+   ============================================================ */
+const canvas = document.getElementById('confettiCanvas');
+const ctx = canvas.getContext('2d');
+let confettiPieces = [];
+let confettiRAF = null;
+
+function resizeCanvas(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+const confettiColors = ['#7c5cff', '#ff6fa5', '#33d69f', '#ffd166', '#4dc9ff'];
+
+function launchConfetti(){
+  confettiPieces = [];
+  const count = 140;
+  for(let i = 0; i < count; i++){
+    confettiPieces.push({
+      x: Math.random() * canvas.width,
+      y: -20 - Math.random() * canvas.height * 0.3,
+      w: 6 + Math.random() * 6,
+      h: 8 + Math.random() * 10,
+      color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+      speedY: 2 + Math.random() * 3,
+      speedX: (Math.random() - 0.5) * 2,
+      rotation: Math.random() * 360,
+      rotationSpeed: (Math.random() - 0.5) * 10,
+      opacity: 1
+    });
+  }
+  if(confettiRAF) cancelAnimationFrame(confettiRAF);
+  animateConfetti();
+}
+
+function animateConfetti(){
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  let stillActive = false;
+
+  confettiPieces.forEach(p => {
+    p.y += p.speedY;
+    p.x += p.speedX;
+    p.rotation += p.rotationSpeed;
+    if(p.y > canvas.height * 0.85){
+      p.opacity -= 0.02;
+    }
+    if(p.y < canvas.height + 20 && p.opacity > 0){
+      stillActive = true;
+      ctx.save();
+      ctx.globalAlpha = Math.max(p.opacity, 0);
+      ctx.translate(p.x, p.y);
+      ctx.rotate((p.rotation * Math.PI) / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    }
+  });
+
+  if(stillActive){
+    confettiRAF = requestAnimationFrame(animateConfetti);
+  } else {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+}
+</script>
+</body>
+</html>
+
+   
